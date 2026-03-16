@@ -52,6 +52,7 @@ export const getScheduledMessages = async (req, res) => {
   try {
     const messages = await getMessagesByUserId(req.user.id);
 
+    
     return res.status(200).json({
       success: true,
       data: messages
