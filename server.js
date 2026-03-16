@@ -4,34 +4,38 @@ import express from "express";
 import cookieParser from "cookie-parser";
 
 import authRoutes from "./routes/auth.js";
+import messageRoutes from "./routes/message.js";
+import {
+    startMessageDeliveryWorker,
+    stopMessageDeliveryWorker
+} from "./services/message.service.js";
 
 const app = express();
 
-/*
-const allowedOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
-
-app.disable("x-powered-by");
-app.use(cors({
-    origin: allowedOrigin,
-    credentials: true
-}));
-*/
 
 app.use(express.json()); // Middleware to parse JSON bodies
 app.use(express.urlencoded({ extended : true})); // Middleware to parse URL-encoded bodies
 app.use(cookieParser()); // Middleware to parse cookies (req.cookies.jwt)
 
-/*
-app.get("/api/health", (_req, res) => {
-    return res.status(200).json({
-        success: true,
-        message: "Server is healthy"
-    });
-});
-*/
 
 app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
 
+await startMessageDeliveryWorker();
+
+const shutdown = async (signal) => {
+    console.log(`Received ${signal}. Shutting down gracefully...`);
+    await stopMessageDeliveryWorker();
+    process.exit(0);
+};
+
+process.on("SIGINT", () => { 
+    shutdown("SIGINT");
+});
+
+process.on("SIGTERM", () => { 
+    shutdown("SIGTERM");
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
