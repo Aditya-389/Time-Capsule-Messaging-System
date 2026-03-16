@@ -163,6 +163,9 @@ export const processQueuedMessageDelivery = async (messageId) => {
   }
 
   await writeDeliveryLog(message.id, message.recipientEmail, deliveredAt);
+  console.log(
+    `[${deliveredAt.toISOString()}] Delivered message ${message.id} to ${message.recipientEmail}`
+  );
   return true;
 };
 
@@ -208,7 +211,8 @@ export const startMessageDeliveryWorker = async () => {
     });
   }
 
-  await syncPendingMessagesToQueue();
+  const syncedCount = await syncPendingMessagesToQueue();
+  console.log(`Message delivery worker started. Synced ${syncedCount} pending message(s).`);
 
   return {
     queue: messageQueue,
